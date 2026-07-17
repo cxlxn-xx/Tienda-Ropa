@@ -1,0 +1,610 @@
+// ============================================================
+// 1. DATOS DE PRODUCTOS POR DEFECTO
+// ============================================================
+const defaultProducts = [
+    {
+        id: 1,
+        name: 'Camiseta Básica',
+        price: 19.99,
+        image: 'https://picsum.photos/id/1/200/200',
+        stock: 10,
+        sizes: ['S', 'M', 'L', 'XL']
+    },
+    {
+        id: 2,
+        name: 'Polo Clásico',
+        price: 29.99,
+        image: 'https://picsum.photos/id/2/200/200',
+        stock: 8,
+        sizes: ['S', 'M', 'L']
+    },
+    {
+        id: 3,
+        name: 'Vestido Floral',
+        price: 39.99,
+        image: 'https://picsum.photos/id/3/200/200',
+        stock: 5,
+        sizes: ['S', 'M', 'L', 'XL']
+    },
+    {
+        id: 4,
+        name: 'Jeans Ajustados',
+        price: 49.99,
+        image: 'https://picsum.photos/id/4/200/200',
+        stock: 6,
+        sizes: ['28', '30', '32', '34']
+    },
+    {
+        id: 5,
+        name: 'Chaqueta de Cuero',
+        price: 79.99,
+        image: 'https://picsum.photos/id/5/200/200',
+        stock: 3,
+        sizes: ['S', 'M', 'L']
+    },
+    {
+        id: 6,
+        name: 'Zapatos Deportivos',
+        price: 59.99,
+        image: 'https://picsum.photos/id/6/200/200',
+        stock: 7,
+        sizes: ['39', '40', '41', '42', '43']
+    }
+];
+
+// ============================================================
+// 2. CARGAR PRODUCTOS DESDE LOCALSTORAGE
+// ============================================================
+let products = [];
+
+function loadProducts() {
+    const stored = localStorage.getItem('products');
+    if (stored) {
+        try {
+            products = JSON.parse(stored);
+            // asegurar campos faltantes
+            products = products.map(p => ({
+                ...p,
+                image: p.image || defaultProducts.find(d => d.id === p.id)?.image || '',
+                sizes: p.sizes || ['S', 'M', 'L']
+            }));
+        } catch (e) {
+            products = JSON.parse(JSON.stringify(defaultProducts));
+        }
+    } else {
+        products = JSON.parse(JSON.stringify(defaultProducts));
+    }
+    // asegurar que todos tengan id único (si no, asignar)
+    let maxId = Math.max(...products.map(p => p.id), 0);
+    products.forEach(p => { if (!p.id) p.id = ++maxId; });
+    saveProducts();
+}
+
+function saveProducts() {
+    localStorage.setItem('products', JSON.stringify(products));
+}
+
+// ============================================================
+// 3. ESTADO DEL CARRITO
+// ============================================================
+let cart = {};
+
+// ============================================================
+// 4. REFERENCIAS DOM
+// ============================================================
+const productGrid = document.getElementById('productGrid');
+const cartBody = document.getElementById('cartBody');
+const cartFooter = document.getElementById('cartFooter');
+const totalAmountSidebar = document.getElementById('totalAmountSidebar');
+const cartBadge = document.getElementById('cartBadge');
+const cartToggle = document.getElementById('cartToggle');
+const cartClose = document.getElementById('cartClose');
+const cartOverlay = document.getElementById('cartOverlay');
+const cartSidebar = document.getElementById('cartSidebar');
+const checkoutBtnSidebar = document.getElementById('checkoutBtnSidebar');
+const menuToggle = document.getElementById('menuToggle');
+const mainNav = document.getElementById('mainNav');
+const adminToggleBtn = document.getElementById('adminToggleBtn');
+const adminPanel = document.getElementById('adminPanel');
+const closeAdminBtn = document.getElementById('closeAdminBtn');
+const adminProductList = document.getElementById('adminProductList');
+const addProductForm = document.getElementById('addProductForm');
+
+// ============================================================
+// 5. LOCALSTORAGE CARRITO
+// ============================================================
+function saveCart() {
+    localStorage.setItem('cart', JSON.stringify(cart));
+}
+
+function loadCart() {
+    const saved = localStorage.getItem('cart');
+    if (saved) {
+        cart = JSON.parse(saved);
+        updateCartUI();
+    }
+}
+
+// ============================================================
+// 6. REDIMENSIONAR IMAGEN
+// ============================================================
+function resizeImage(file, maxWidth = 300) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ratio = maxWidth / img.width;
+                canvas.width = maxWidth;
+                canvas.height = img.height * ratio;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', 0.8));
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+// ============================================================
+// 7. RENDERIZAR CATÁLOGO (TIENDA)
+// ============================================================
+function renderProducts() {
+    productGrid.innerHTML = '';
+    products.forEach(p => {
+        const totalInCart = Object.keys(cart)
+            .filter(key => key.startsWith(p.id + '-'))
+            .reduce((sum, key) => sum + cart[key], 0);
+        const available = p.stock - totalInCart;
+
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+            <div class="image-wrapper" data-id="${p.id}">
+                <img src="${p.image}" alt="${p.name}" loading="lazy" />
+                <div class="image-overlay">Cambiar foto</div>
+            </div>
+            <h3>${p.name}</h3>
+            <div class="price">$${p.price.toFixed(2)}</div>
+            <div class="stock-info">Stock: ${available > 0 ? available : 'Agotado'}</div>
+            <select class="size-selector" data-id="${p.id}">
+                ${p.sizes.map(s => `<option value="${s}">Talle ${s}</option>`).join('')}
+            </select>
+            <button data-id="${p.id}" ${available <= 0 ? 'disabled' : ''}>
+                ${available > 0 ? 'Agregar' : 'Sin stock'}
+            </button>
+        `;
+        productGrid.appendChild(card);
+
+        // Input file para cambiar imagen
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'none';
+        fileInput.dataset.id = p.id;
+        card.appendChild(fileInput);
+
+        const wrapper = card.querySelector('.image-wrapper');
+        wrapper.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                const dataUrl = await resizeImage(file, 300);
+                const productIndex = products.findIndex(prod => prod.id === parseInt(fileInput.dataset.id));
+                if (productIndex !== -1) {
+                    products[productIndex].image = dataUrl;
+                    saveProducts();
+                    const img = wrapper.querySelector('img');
+                    img.src = dataUrl;
+                    wrapper.style.border = '3px solid #25D366';
+                    setTimeout(() => {
+                        wrapper.style.border = 'none';
+                    }, 1500);
+                    // Actualizar también el admin si está abierto
+                    if (adminPanel.style.display !== 'none') renderAdmin();
+                }
+            } catch (err) {
+                alert('Error al cargar la imagen.');
+                console.error(err);
+            }
+            fileInput.value = '';
+        });
+    });
+
+    // Eventos de botones "Agregar"
+    document.querySelectorAll('.product-card button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = parseInt(btn.dataset.id);
+            const card = btn.closest('.product-card');
+            const select = card.querySelector('.size-selector');
+            const size = select.value;
+            addToCart(id, size);
+        });
+    });
+}
+
+// ============================================================
+// 8. FUNCIONES DEL CARRITO
+// ============================================================
+function addToCart(productId, size) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const totalInCart = Object.keys(cart)
+        .filter(key => key.startsWith(productId + '-'))
+        .reduce((sum, key) => sum + cart[key], 0);
+
+    if (totalInCart >= product.stock) {
+        alert('No hay suficiente stock disponible.');
+        return;
+    }
+
+    const key = `${productId}-${size}`;
+    cart[key] = (cart[key] || 0) + 1;
+
+    saveCart();
+    updateCartUI();
+    updateProductButtons();
+}
+
+function changeQuantity(productId, size, delta) {
+    const key = `${productId}-${size}`;
+    if (!cart[key]) return;
+    const newQty = cart[key] + delta;
+    if (newQty <= 0) {
+        delete cart[key];
+    } else {
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
+        const totalInCart = Object.keys(cart)
+            .filter(k => k.startsWith(productId + '-'))
+            .reduce((sum, k) => sum + (k === key ? newQty : cart[k]), 0);
+        if (totalInCart > product.stock) {
+            alert('Stock insuficiente.');
+            return;
+        }
+        cart[key] = newQty;
+    }
+    saveCart();
+    updateCartUI();
+    updateProductButtons();
+}
+
+function removeItem(productId, size) {
+    const key = `${productId}-${size}`;
+    delete cart[key];
+    saveCart();
+    updateCartUI();
+    updateProductButtons();
+}
+
+// ============================================================
+// 9. ACTUALIZAR UI CARRITO
+// ============================================================
+function updateCartUI() {
+    const totalItems = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+    cartBadge.textContent = totalItems;
+
+    const hasItems = totalItems > 0;
+    cartFooter.style.display = hasItems ? 'block' : 'none';
+
+    if (!hasItems) {
+        cartBody.innerHTML = `<div class="cart-empty">No hay productos en el carrito.</div>`;
+        return;
+    }
+
+    let html = '';
+    let totalPrice = 0;
+
+    for (const [key, qty] of Object.entries(cart)) {
+        const [idStr, size] = key.split('-');
+        const id = parseInt(idStr);
+        const prod = products.find(p => p.id === id);
+        if (!prod) continue;
+        const subtotal = prod.price * qty;
+        totalPrice += subtotal;
+
+        html += `
+            <div class="cart-item">
+                <img src="${prod.image}" alt="${prod.name}" />
+                <div class="cart-item-details">
+                    <div class="name">${prod.name}</div>
+                    <span class="size">${size}</span>
+                    <div class="price">$${prod.price.toFixed(2)}</div>
+                </div>
+                <div class="cart-item-controls">
+                    <button class="qty-btn" data-id="${prod.id}" data-size="${size}" data-delta="-1">−</button>
+                    <span class="qty">${qty}</span>
+                    <button class="qty-btn" data-id="${prod.id}" data-size="${size}" data-delta="1">+</button>
+                    <button class="remove-btn" data-id="${prod.id}" data-size="${size}">✕</button>
+                </div>
+            </div>
+        `;
+    }
+
+    cartBody.innerHTML = html;
+    totalAmountSidebar.textContent = `$${totalPrice.toFixed(2)}`;
+
+    document.querySelectorAll('.qty-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = parseInt(btn.dataset.id);
+            const size = btn.dataset.size;
+            const delta = parseInt(btn.dataset.delta);
+            changeQuantity(id, size, delta);
+        });
+    });
+
+    document.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = parseInt(btn.dataset.id);
+            const size = btn.dataset.size;
+            removeItem(id, size);
+        });
+    });
+}
+
+// ============================================================
+// 10. ACTUALIZAR BOTONES DE PRODUCTOS (stock)
+// ============================================================
+function updateProductButtons() {
+    document.querySelectorAll('.product-card button').forEach(btn => {
+        const id = parseInt(btn.dataset.id);
+        const product = products.find(p => p.id === id);
+        if (!product) return;
+        const totalInCart = Object.keys(cart)
+            .filter(key => key.startsWith(id + '-'))
+            .reduce((sum, key) => sum + cart[key], 0);
+        const available = product.stock - totalInCart;
+        const stockInfo = btn.closest('.product-card').querySelector('.stock-info');
+        if (stockInfo) {
+            stockInfo.textContent = `Stock: ${available > 0 ? available : 'Agotado'}`;
+        }
+        if (available <= 0) {
+            btn.disabled = true;
+            btn.textContent = 'Sin stock';
+        } else {
+            btn.disabled = false;
+            btn.textContent = 'Agregar';
+        }
+    });
+}
+
+// ============================================================
+// 11. ABRIR / CERRAR CARRITO
+// ============================================================
+function openCart() {
+    cartSidebar.classList.add('open');
+    cartOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCart() {
+    cartSidebar.classList.remove('open');
+    cartOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+cartToggle.addEventListener('click', openCart);
+cartClose.addEventListener('click', closeCart);
+cartOverlay.addEventListener('click', closeCart);
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeCart();
+});
+
+// ============================================================
+// 12. MENÚ HAMBURGUESA
+// ============================================================
+menuToggle.addEventListener('click', () => {
+    mainNav.classList.toggle('open');
+});
+
+// ============================================================
+// 13. WHATSAPP
+// ============================================================
+function sendOrderToWhatsApp() {
+    const items = Object.entries(cart);
+    if (items.length === 0) {
+        alert('El carrito está vacío.');
+        return;
+    }
+
+    let message = 'Pedido Estilo Cool\n\n';
+    let total = 0;
+
+    for (const [key, qty] of items) {
+        const [idStr, size] = key.split('-');
+        const id = parseInt(idStr);
+        const prod = products.find(p => p.id === id);
+        if (!prod) continue;
+        const subtotal = prod.price * qty;
+        total += subtotal;
+        message += `${prod.name} (Talle ${size}) x${qty} → $${subtotal.toFixed(2)}\n`;
+    }
+
+    message += `\nTotal: $${total.toFixed(2)}`;
+    message += '\n\n¡Gracias por tu compra!';
+
+    const encodedMessage = encodeURIComponent(message);
+    const phoneNumber = ''; // <-- PON TU NÚMERO AQUÍ
+
+    const url = phoneNumber
+        ? `https://wa.me/${phoneNumber}?text=${encodedMessage}`
+        : `https://api.whatsapp.com/send?text=${encodedMessage}`;
+
+    window.open(url, '_blank');
+}
+
+checkoutBtnSidebar.addEventListener('click', sendOrderToWhatsApp);
+
+// ============================================================
+// 14. ADMIN PANEL
+// ============================================================
+function renderAdmin() {
+    if (!adminProductList) return;
+    adminProductList.innerHTML = '';
+    products.forEach((p, index) => {
+        const div = document.createElement('div');
+        div.className = 'admin-item';
+        div.innerHTML = `
+            <input type="text" class="admin-name" value="${p.name}" data-id="${p.id}" />
+            <input type="number" class="admin-price" value="${p.price}" step="0.01" data-id="${p.id}" />
+            <input type="number" class="admin-stock" value="${p.stock}" data-id="${p.id}" />
+            <input type="text" class="admin-sizes" value="${p.sizes.join(',')}" data-id="${p.id}" placeholder="S,M,L" />
+            <input type="file" class="admin-image-input" accept="image/*" data-id="${p.id}" />
+            <div class="admin-actions">
+                <button class="admin-save-btn" data-id="${p.id}">Guardar</button>
+                <button class="delete-btn" data-id="${p.id}">Eliminar</button>
+            </div>
+        `;
+        adminProductList.appendChild(div);
+
+        // Evento para cambiar imagen desde admin
+        const fileInput = div.querySelector('.admin-image-input');
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                const dataUrl = await resizeImage(file, 300);
+                const productIndex = products.findIndex(prod => prod.id === parseInt(fileInput.dataset.id));
+                if (productIndex !== -1) {
+                    products[productIndex].image = dataUrl;
+                    saveProducts();
+                    renderProducts(); // actualizar tienda
+                    renderAdmin(); // refrescar admin
+                    alert('Imagen actualizada.');
+                }
+            } catch (err) {
+                alert('Error al subir imagen.');
+                console.error(err);
+            }
+            fileInput.value = '';
+        });
+
+        // Guardar cambios
+        div.querySelector('.admin-save-btn').addEventListener('click', () => {
+            const id = parseInt(div.querySelector('.admin-save-btn').dataset.id);
+            const name = div.querySelector('.admin-name').value.trim();
+            const price = parseFloat(div.querySelector('.admin-price').value);
+            const stock = parseInt(div.querySelector('.admin-stock').value);
+            const sizesRaw = div.querySelector('.admin-sizes').value;
+            const sizes = sizesRaw.split(',').map(s => s.trim()).filter(s => s);
+
+            if (!name || isNaN(price) || isNaN(stock) || sizes.length === 0) {
+                alert('Todos los campos son obligatorios.');
+                return;
+            }
+
+            const productIndex = products.findIndex(p => p.id === id);
+            if (productIndex !== -1) {
+                products[productIndex].name = name;
+                products[productIndex].price = price;
+                products[productIndex].stock = stock;
+                products[productIndex].sizes = sizes;
+                saveProducts();
+                renderProducts();
+                renderAdmin();
+                alert('Producto actualizado.');
+            }
+        });
+
+        // Eliminar
+        div.querySelector('.delete-btn').addEventListener('click', () => {
+            if (confirm('¿Eliminar este producto?')) {
+                const id = parseInt(div.querySelector('.delete-btn').dataset.id);
+                products = products.filter(p => p.id !== id);
+                // También limpiar carrito de este producto
+                for (const key of Object.keys(cart)) {
+                    if (key.startsWith(id + '-')) delete cart[key];
+                }
+                saveProducts();
+                saveCart();
+                renderProducts();
+                renderAdmin();
+                updateCartUI();
+            }
+        });
+    });
+}
+
+// Mostrar/ocultar admin con contraseña
+adminToggleBtn.addEventListener('click', () => {
+    if (adminPanel.style.display === 'none') {
+        const pass = prompt('Ingresa la contraseña de administrador:');
+        if (pass === 'admin123') {  // Cambia esta contraseña
+            adminPanel.style.display = 'block';
+            renderAdmin();
+            // Cerrar menú móvil si está abierto
+            mainNav.classList.remove('open');
+        } else {
+            alert('Contraseña incorrecta.');
+        }
+    } else {
+        adminPanel.style.display = 'none';
+    }
+});
+
+closeAdminBtn.addEventListener('click', () => {
+    adminPanel.style.display = 'none';
+});
+
+// Agregar nuevo producto
+addProductForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('newName').value.trim();
+    const price = parseFloat(document.getElementById('newPrice').value);
+    const stock = parseInt(document.getElementById('newStock').value);
+    const sizesRaw = document.getElementById('newSizes').value;
+    const sizes = sizesRaw.split(',').map(s => s.trim()).filter(s => s);
+    const fileInput = document.getElementById('newImage');
+    const file = fileInput.files[0];
+
+    if (!name || isNaN(price) || isNaN(stock) || sizes.length === 0) {
+        alert('Completa todos los campos.');
+        return;
+    }
+
+    let image = '';
+    if (file) {
+        try {
+            image = await resizeImage(file, 300);
+        } catch (err) {
+            alert('Error al procesar la imagen.');
+            console.error(err);
+            return;
+        }
+    } else {
+        image = 'https://picsum.photos/seed/' + Date.now() + '/200/200';
+    }
+
+    const newId = products.length ? Math.max(...products.map(p => p.id)) + 1 : 1;
+    products.push({
+        id: newId,
+        name,
+        price,
+        image,
+        stock,
+        sizes
+    });
+    saveProducts();
+    renderProducts();
+    renderAdmin();
+    addProductForm.reset();
+    alert('Producto agregado.');
+});
+
+// ============================================================
+// 15. INICIALIZACIÓN
+// ============================================================
+loadProducts();
+loadCart();
+renderProducts();
+updateCartUI();
+updateProductButtons();
