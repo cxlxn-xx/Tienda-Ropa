@@ -1,10 +1,10 @@
 // ============================================================
-// 1. DATOS DE PRODUCTOS (por defecto)
+// 1. DATOS DE PRODUCTOS POR DEFECTO
 // ============================================================
 const defaultProducts = [
     {
         id: 1,
-        name: 'Camiseta Basica',
+        name: 'Camiseta Básica',
         price: 19.99,
         image: 'https://picsum.photos/id/1/200/200',
         stock: 10,
@@ -12,7 +12,7 @@ const defaultProducts = [
     },
     {
         id: 2,
-        name: 'Polo Clasico',
+        name: 'Polo Clásico',
         price: 29.99,
         image: 'https://picsum.photos/id/2/200/200',
         stock: 8,
@@ -62,9 +62,11 @@ function loadProducts() {
     if (stored) {
         try {
             products = JSON.parse(stored);
+            // asegurar campos faltantes
             products = products.map(p => ({
                 ...p,
-                image: p.image || defaultProducts.find(d => d.id === p.id)?.image || ''
+                image: p.image || defaultProducts.find(d => d.id === p.id)?.image || '',
+                sizes: p.sizes || ['S', 'M', 'L']
             }));
         } catch (e) {
             products = JSON.parse(JSON.stringify(defaultProducts));
@@ -72,6 +74,10 @@ function loadProducts() {
     } else {
         products = JSON.parse(JSON.stringify(defaultProducts));
     }
+    // asegurar que todos tengan id único (si no, asignar)
+    let maxId = Math.max(...products.map(p => p.id), 0);
+    products.forEach(p => { if (!p.id) p.id = ++maxId; });
+    saveProducts();
 }
 
 function saveProducts() {
@@ -98,6 +104,11 @@ const cartSidebar = document.getElementById('cartSidebar');
 const checkoutBtnSidebar = document.getElementById('checkoutBtnSidebar');
 const menuToggle = document.getElementById('menuToggle');
 const mainNav = document.getElementById('mainNav');
+const adminToggleBtn = document.getElementById('adminToggleBtn');
+const adminPanel = document.getElementById('adminPanel');
+const closeAdminBtn = document.getElementById('closeAdminBtn');
+const adminProductList = document.getElementById('adminProductList');
+const addProductForm = document.getElementById('addProductForm');
 
 // ============================================================
 // 5. LOCALSTORAGE CARRITO
@@ -140,11 +151,11 @@ function resizeImage(file, maxWidth = 300) {
 }
 
 // ============================================================
-// 7. RENDERIZAR CATÁLOGO
+// 7. RENDERIZAR CATÁLOGO (TIENDA)
 // ============================================================
 function renderProducts() {
     productGrid.innerHTML = '';
-    products.forEach((p) => {
+    products.forEach(p => {
         const totalInCart = Object.keys(cart)
             .filter(key => key.startsWith(p.id + '-'))
             .reduce((sum, key) => sum + cart[key], 0);
@@ -169,6 +180,7 @@ function renderProducts() {
         `;
         productGrid.appendChild(card);
 
+        // Input file para cambiar imagen
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.accept = 'image/*';
@@ -196,6 +208,8 @@ function renderProducts() {
                     setTimeout(() => {
                         wrapper.style.border = 'none';
                     }, 1500);
+                    // Actualizar también el admin si está abierto
+                    if (adminPanel.style.display !== 'none') renderAdmin();
                 }
             } catch (err) {
                 alert('Error al cargar la imagen.');
@@ -205,6 +219,7 @@ function renderProducts() {
         });
     });
 
+    // Eventos de botones "Agregar"
     document.querySelectorAll('.product-card button').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = parseInt(btn.dataset.id);
@@ -272,7 +287,7 @@ function removeItem(productId, size) {
 }
 
 // ============================================================
-// 9. ACTUALIZAR UI
+// 9. ACTUALIZAR UI CARRITO
 // ============================================================
 function updateCartUI() {
     const totalItems = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
@@ -337,7 +352,7 @@ function updateCartUI() {
 }
 
 // ============================================================
-// 10. ACTUALIZAR BOTONES DE PRODUCTOS
+// 10. ACTUALIZAR BOTONES DE PRODUCTOS (stock)
 // ============================================================
 function updateProductButtons() {
     document.querySelectorAll('.product-card button').forEach(btn => {
@@ -380,7 +395,6 @@ function closeCart() {
 cartToggle.addEventListener('click', openCart);
 cartClose.addEventListener('click', closeCart);
 cartOverlay.addEventListener('click', closeCart);
-
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeCart();
 });
@@ -398,7 +412,7 @@ menuToggle.addEventListener('click', () => {
 function sendOrderToWhatsApp() {
     const items = Object.entries(cart);
     if (items.length === 0) {
-        alert('El carrito esta vacio.');
+        alert('El carrito está vacío.');
         return;
     }
 
@@ -416,7 +430,7 @@ function sendOrderToWhatsApp() {
     }
 
     message += `\nTotal: $${total.toFixed(2)}`;
-    message += '\n\nGracias por tu compra!';
+    message += '\n\n¡Gracias por tu compra!';
 
     const encodedMessage = encodeURIComponent(message);
     const phoneNumber = ''; // <-- PON TU NÚMERO AQUÍ
@@ -431,7 +445,163 @@ function sendOrderToWhatsApp() {
 checkoutBtnSidebar.addEventListener('click', sendOrderToWhatsApp);
 
 // ============================================================
-// 14. INICIALIZACIÓN
+// 14. ADMIN PANEL
+// ============================================================
+function renderAdmin() {
+    if (!adminProductList) return;
+    adminProductList.innerHTML = '';
+    products.forEach((p, index) => {
+        const div = document.createElement('div');
+        div.className = 'admin-item';
+        div.innerHTML = `
+            <input type="text" class="admin-name" value="${p.name}" data-id="${p.id}" />
+            <input type="number" class="admin-price" value="${p.price}" step="0.01" data-id="${p.id}" />
+            <input type="number" class="admin-stock" value="${p.stock}" data-id="${p.id}" />
+            <input type="text" class="admin-sizes" value="${p.sizes.join(',')}" data-id="${p.id}" placeholder="S,M,L" />
+            <input type="file" class="admin-image-input" accept="image/*" data-id="${p.id}" />
+            <div class="admin-actions">
+                <button class="admin-save-btn" data-id="${p.id}">Guardar</button>
+                <button class="delete-btn" data-id="${p.id}">Eliminar</button>
+            </div>
+        `;
+        adminProductList.appendChild(div);
+
+        // Evento para cambiar imagen desde admin
+        const fileInput = div.querySelector('.admin-image-input');
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                const dataUrl = await resizeImage(file, 300);
+                const productIndex = products.findIndex(prod => prod.id === parseInt(fileInput.dataset.id));
+                if (productIndex !== -1) {
+                    products[productIndex].image = dataUrl;
+                    saveProducts();
+                    renderProducts(); // actualizar tienda
+                    renderAdmin(); // refrescar admin
+                    alert('Imagen actualizada.');
+                }
+            } catch (err) {
+                alert('Error al subir imagen.');
+                console.error(err);
+            }
+            fileInput.value = '';
+        });
+
+        // Guardar cambios
+        div.querySelector('.admin-save-btn').addEventListener('click', () => {
+            const id = parseInt(div.querySelector('.admin-save-btn').dataset.id);
+            const name = div.querySelector('.admin-name').value.trim();
+            const price = parseFloat(div.querySelector('.admin-price').value);
+            const stock = parseInt(div.querySelector('.admin-stock').value);
+            const sizesRaw = div.querySelector('.admin-sizes').value;
+            const sizes = sizesRaw.split(',').map(s => s.trim()).filter(s => s);
+
+            if (!name || isNaN(price) || isNaN(stock) || sizes.length === 0) {
+                alert('Todos los campos son obligatorios.');
+                return;
+            }
+
+            const productIndex = products.findIndex(p => p.id === id);
+            if (productIndex !== -1) {
+                products[productIndex].name = name;
+                products[productIndex].price = price;
+                products[productIndex].stock = stock;
+                products[productIndex].sizes = sizes;
+                saveProducts();
+                renderProducts();
+                renderAdmin();
+                alert('Producto actualizado.');
+            }
+        });
+
+        // Eliminar
+        div.querySelector('.delete-btn').addEventListener('click', () => {
+            if (confirm('¿Eliminar este producto?')) {
+                const id = parseInt(div.querySelector('.delete-btn').dataset.id);
+                products = products.filter(p => p.id !== id);
+                // También limpiar carrito de este producto
+                for (const key of Object.keys(cart)) {
+                    if (key.startsWith(id + '-')) delete cart[key];
+                }
+                saveProducts();
+                saveCart();
+                renderProducts();
+                renderAdmin();
+                updateCartUI();
+            }
+        });
+    });
+}
+
+// Mostrar/ocultar admin con contraseña
+adminToggleBtn.addEventListener('click', () => {
+    if (adminPanel.style.display === 'none') {
+        const pass = prompt('Ingresa la contraseña de administrador:');
+        if (pass === 'admin123') {  // Cambia esta contraseña
+            adminPanel.style.display = 'block';
+            renderAdmin();
+            // Cerrar menú móvil si está abierto
+            mainNav.classList.remove('open');
+        } else {
+            alert('Contraseña incorrecta.');
+        }
+    } else {
+        adminPanel.style.display = 'none';
+    }
+});
+
+closeAdminBtn.addEventListener('click', () => {
+    adminPanel.style.display = 'none';
+});
+
+// Agregar nuevo producto
+addProductForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('newName').value.trim();
+    const price = parseFloat(document.getElementById('newPrice').value);
+    const stock = parseInt(document.getElementById('newStock').value);
+    const sizesRaw = document.getElementById('newSizes').value;
+    const sizes = sizesRaw.split(',').map(s => s.trim()).filter(s => s);
+    const fileInput = document.getElementById('newImage');
+    const file = fileInput.files[0];
+
+    if (!name || isNaN(price) || isNaN(stock) || sizes.length === 0) {
+        alert('Completa todos los campos.');
+        return;
+    }
+
+    let image = '';
+    if (file) {
+        try {
+            image = await resizeImage(file, 300);
+        } catch (err) {
+            alert('Error al procesar la imagen.');
+            console.error(err);
+            return;
+        }
+    } else {
+        image = 'https://picsum.photos/seed/' + Date.now() + '/200/200';
+    }
+
+    const newId = products.length ? Math.max(...products.map(p => p.id)) + 1 : 1;
+    products.push({
+        id: newId,
+        name,
+        price,
+        image,
+        stock,
+        sizes
+    });
+    saveProducts();
+    renderProducts();
+    renderAdmin();
+    addProductForm.reset();
+    alert('Producto agregado.');
+});
+
+// ============================================================
+// 15. INICIALIZACIÓN
 // ============================================================
 loadProducts();
 loadCart();
