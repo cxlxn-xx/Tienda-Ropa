@@ -160,6 +160,7 @@ function renderProducts(category = 'all') {
             fileInput.type = 'file';
             fileInput.accept = 'image/*';
             fileInput.style.display = 'none';
+            fileInput.capture = 'environment';
             fileInput.dataset.id = p.id;
             card.appendChild(fileInput);
 
