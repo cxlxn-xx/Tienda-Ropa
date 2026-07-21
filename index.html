@@ -150,7 +150,23 @@
             <p>&copy; 2026 Estilo Cool – Hecho con amor para ti.</p>
         </div>
     </footer>
-
+    <!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+<script>
+ const firebaseConfig = {
+  apiKey: "AIzaSyB9xyhX5fDGUsEM7tZ_Pp-aZRPV7NqcN2k",
+  authDomain: "estilo-cool-tienda.firebaseapp.com",
+  projectId: "estilo-cool-tienda",
+  storageBucket: "estilo-cool-tienda.firebasestorage.app",
+  messagingSenderId: "708956287478",
+  appId: "1:708956287478:web:e1e11e88e8bbd6b3c0d7d7",
+  measurementId: "G-EC9REBQPJJ"
+};
+ firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
+    window.storage = storage; // para usar desde app.js
+</script>
     <script src="app.js"></script>
 </body>
 </html>
