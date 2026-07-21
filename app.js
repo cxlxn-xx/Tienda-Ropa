@@ -154,21 +154,6 @@ function renderProducts(category = 'all') {
         `;
         productGrid.appendChild(card);
 
-      // Subir imagen (solo para admin)
-if (isAdminAuthenticated()) {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.capture = 'environment'; // para móvil
-    fileInput.style.display = 'none';
-    fileInput.dataset.id = p.id;
-    card.appendChild(fileInput);
-
-    const wrapper = card.querySelector('.image-wrapper');
-    wrapper.addEventListener('click', (e) => {
-        e.stopPropagation(); // evita que se abra el lightbox al subir
-        fileInput.click();
-    });
 
     fileInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
@@ -462,10 +447,50 @@ function renderAdminProducts() {
                 <label style="grid-column:1/-1;">Talles (separados por comas):
                     <input type="text" class="admin-sizes" value="${p.sizes.join(',')}" />
                 </label>
-                <label style="grid-column:1/-1;">URL imagen:
-                    <input type="text" class="admin-image" value="${p.image}" />
+                <label style="grid-column:1/-1;">Subir imagen:
+                    <input type="file" accept="image/*" class="admin-file-input" data-id="${p.id}" />
                 </label>
+                
             </div>
+             // Evento para subir imagen desde el panel
+const fileInput = div.querySelector('.admin-file-input');
+fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+        const dataUrl = await resizeImage(file, 300);
+        const idx = products.findIndex(prod => prod.id === p.id);
+        if (idx !== -1) {
+            products[idx].image = dataUrl;
+            saveProducts();
+            renderAdminProducts(); // refrescar panel
+            renderProducts(currentCategory);
+            updateProductButtons();
+        }
+    } catch (err) {
+        alert('Error al cargar la imagen.');
+    }
+    fileInput.value = ''; // reset
+});// Evento para subir imagen desde el panel
+const fileInput = div.querySelector('.admin-file-input');
+fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+        const dataUrl = await resizeImage(file, 300);
+        const idx = products.findIndex(prod => prod.id === p.id);
+        if (idx !== -1) {
+            products[idx].image = dataUrl;
+            saveProducts();
+            renderAdminProducts(); // refrescar panel
+            renderProducts(currentCategory);
+            updateProductButtons();
+        }
+    } catch (err) {
+        alert('Error al cargar la imagen.');
+    }
+    fileInput.value = ''; // reset
+});
             <div class="admin-product-actions">
                 <button class="btn-save-product" data-id="${p.id}">Guardar cambios</button>
                 <button class="btn-delete-product" data-id="${p.id}">Eliminar</button>
