@@ -559,6 +559,29 @@ function sendOrderToWhatsApp() {
     window.open(url, '_blank');
 }
 checkoutBtnSidebar.addEventListener('click', sendOrderToWhatsApp);
+// Lightbox: abrir al hacer clic en la imagen (para todos los usuarios)
+productGrid.addEventListener('click', (e) => {
+    const wrapper = e.target.closest('.image-wrapper');
+    if (!wrapper) return;
+    // Si el admin está autenticado, no abrimos lightbox porque ya se usa para subir (ver stopPropagation)
+    // Si no es admin, abrimos el lightbox
+    if (isAdminAuthenticated()) return; // opcional: si quieres que el admin también pueda ver, quita esta línea
+    const img = wrapper.querySelector('img');
+    if (img) {
+        document.getElementById('lightboxImg').src = img.src;
+        document.getElementById('lightbox').classList.add('active');
+    }
+});
+
+// Cerrar lightbox
+document.getElementById('lightboxClose').addEventListener('click', () => {
+    document.getElementById('lightbox').classList.remove('active');
+});
+document.getElementById('lightbox').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+        document.getElementById('lightbox').classList.remove('active');
+    }
+});
 
 // ============================================================
 // 20. INICIALIZACIÓN
