@@ -8,9 +8,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
+    <!-- HEADER -->
     <header class="header">
         <div class="container header-inner">
             <div class="logo">
+                <span class="logo-icon">✦</span>
                 <span class="logo-text">Estilo <span>Cool</span></span>
             </div>
             <nav class="nav" id="mainNav">
@@ -21,25 +23,27 @@
                 </ul>
             </nav>
             <div class="header-actions">
-                <button class="cart-toggle" id="cartToggle" aria-label="Abrir carrito">
+                <button class="cart-toggle" id="cartToggle" aria-label="Carrito">
                     <span class="cart-icon">🛍️</span>
                     <span class="cart-badge" id="cartBadge">0</span>
                 </button>
-                <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
+                <button class="menu-toggle" id="menuToggle" aria-label="Menú">
                     <span></span><span></span><span></span>
                 </button>
             </div>
         </div>
     </header>
 
+    <!-- HERO -->
     <section class="hero">
         <div class="container hero-content">
             <h1>Viste con <span>actitud</span></h1>
-            <p>Descubre la coleccion mas cool de la temporada. Estilo, comodidad y personalidad.</p>
+            <p>Descubre la colección más cool de la temporada.</p>
             <a href="#productos" class="btn-primary">Explorar ahora</a>
         </div>
     </section>
 
+    <!-- CATÁLOGO -->
     <section id="productos" class="products-section">
         <div class="container">
             <h2 class="section-title">Nuestros Favoritos</h2>
@@ -47,6 +51,7 @@
         </div>
     </section>
 
+    <!-- CARRITO LATERAL -->
     <div class="cart-overlay" id="cartOverlay"></div>
     <aside class="cart-sidebar" id="cartSidebar">
         <div class="cart-header">
@@ -65,9 +70,30 @@
         </div>
     </aside>
 
+    <!-- ADMIN PANEL (inicialmente oculto) -->
+    <div id="adminPanel" style="display: none; margin: 40px 0; padding: 30px; background: #fce4ec; border-radius: 20px;">
+        <div class="container">
+            <h2 style="text-align: center;">Panel de Administración</h2>
+            <button id="closeAdminBtn" style="display: block; margin: 10px auto; padding: 8px 20px; background: #e74c3c; color: white; border: none; border-radius: 30px; cursor: pointer;">Cerrar Admin</button>
+            <div id="adminProductList"></div>
+            <hr style="margin: 30px 0;">
+            <h3>Agregar Nuevo Producto</h3>
+            <form id="addProductForm">
+                <input type="text" id="newName" placeholder="Nombre" required />
+                <input type="number" id="newPrice" placeholder="Precio" step="0.01" required />
+                <input type="number" id="newStock" placeholder="Stock" required />
+                <input type="text" id="newSizes" placeholder="Talles (ej. S,M,L)" required />
+                <input type="file" id="newImage" accept="image/*" />
+                <button type="submit">Agregar Producto</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2026 Estilo Cool – Hecho con amor para ti.</p>
+            <p>© 2026 Estilo Cool – Hecho con pasión.</p>
+            <button id="adminToggleBtn" style="background: none; border: none; color: #ff6f91; text-decoration: underline; cursor: pointer; margin-top: 10px;">Administrar tienda</button>
         </div>
     </footer>
 
