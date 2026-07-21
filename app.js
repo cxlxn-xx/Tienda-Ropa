@@ -154,40 +154,43 @@ function renderProducts(category = 'all') {
         `;
         productGrid.appendChild(card);
 
-        // Subir imagen (solo si está autenticado)
-        if (isAdminAuthenticated()) {
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = 'image/*';
-            fileInput.style.display = 'none';
-            fileInput.capture = 'environment';
-            fileInput.dataset.id = p.id;
-            card.appendChild(fileInput);
+      // Subir imagen (solo para admin)
+if (isAdminAuthenticated()) {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.capture = 'environment'; // para móvil
+    fileInput.style.display = 'none';
+    fileInput.dataset.id = p.id;
+    card.appendChild(fileInput);
 
-            const wrapper = card.querySelector('.image-wrapper');
-            wrapper.addEventListener('click', () => fileInput.click());
+    const wrapper = card.querySelector('.image-wrapper');
+    wrapper.addEventListener('click', (e) => {
+        e.stopPropagation(); // evita que se abra el lightbox al subir
+        fileInput.click();
+    });
 
-            fileInput.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                try {
-                    const dataUrl = await resizeImage(file, 300);
-                    const idx = products.findIndex(prod => prod.id === p.id);
-                    if (idx !== -1) {
-                        products[idx].image = dataUrl;
-                        saveProducts();
-                        const img = wrapper.querySelector('img');
-                        img.src = dataUrl;
-                        wrapper.style.border = '3px solid #25D366';
-                        setTimeout(() => wrapper.style.border = 'none', 1500);
-                        if (adminSidebar.classList.contains('open')) renderAdminProducts();
-                    }
-                } catch (err) {
-                    alert('Error al cargar la imagen.');
-                }
-                fileInput.value = '';
-            });
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            const dataUrl = await resizeImage(file, 300);
+            const idx = products.findIndex(prod => prod.id === p.id);
+            if (idx !== -1) {
+                products[idx].image = dataUrl;
+                saveProducts();
+                const img = wrapper.querySelector('img');
+                img.src = dataUrl;
+                wrapper.style.border = '3px solid #25D366';
+                setTimeout(() => wrapper.style.border = 'none', 1500);
+                if (adminSidebar.classList.contains('open')) renderAdminProducts();
+            }
+        } catch (err) {
+            alert('Error al cargar la imagen.');
         }
+        fileInput.value = '';
+    });
+}
     });
 
     // Eventos botones agregar
