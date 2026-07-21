@@ -91,6 +91,17 @@
         </div>
     </section>
 
+    <!-- MODAL DE LOGIN PARA ADMIN -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-box">
+            <h2>Acceso Administrador</h2>
+            <p>Ingresa la contraseña para gestionar productos.</p>
+            <input type="password" id="adminPassword" placeholder="Contraseña" />
+            <button id="loginBtn">Entrar</button>
+            <p id="loginError" style="color: red; display: none;">Contraseña incorrecta.</p>
+        </div>
+    </div>
+
     <!-- PANEL ADMIN (lateral) -->
     <div class="admin-overlay" id="adminOverlay"></div>
     <aside class="admin-sidebar" id="adminSidebar">
@@ -131,6 +142,10 @@
             <p>&copy; 2026 Estilo Cool – Hecho con amor para ti.</p>
         </div>
     </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
 
     <script src="app.js"></script>
 </body>
