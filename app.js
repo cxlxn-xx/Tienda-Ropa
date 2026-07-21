@@ -363,21 +363,21 @@ categoryFilters.addEventListener('click', (e) => {
 // 14. ADMIN: SEGURIDAD Y SESIÓN
 // ============================================================
 function isAdminAuthenticated() {
-    const session = localStorage.getItem(SESSION_KEY);
+    const session = sessionStorage.getItem(SESSION_KEY); // <-- sessionStorage
     if (!session) return false;
     try {
         const data = JSON.parse(session);
-        // Sesión válida por 1 hora
-        return true; // (Date.now() - data.timestamp) < 3600000;
+        // Opcional: puedes quitar la validación de tiempo si quieres que dure solo mientras la pestaña esté abierta
+        return true; // o mantener (Date.now() - data.timestamp) < 86400000
     } catch { return false; }
 }
 
 function setAdminSession() {
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ timestamp: Date.now() }));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ timestamp: Date.now() })); // <-- sessionStorage
 }
 
 function clearAdminSession() {
-    localStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_KEY); // <-- sessionStorage
 }
 
 // ============================================================
@@ -565,7 +565,3 @@ renderProducts('all');
 updateCartUI();
 updateProductButtons();
 
-// Si la sesión admin está activa, mostrar el botón admin con estilo
-//if (isAdminAuthenticated()) {
-//    adminToggle.style.borderColor = '#25D366';
-}
