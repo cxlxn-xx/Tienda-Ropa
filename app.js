@@ -58,6 +58,11 @@ const loginPassword = $('loginPassword');
 const loginBtn = $('loginBtn');
 const loginError = $('loginError');
 
+// Lightbox
+const lightbox = $('lightbox');
+const lightboxImg = $('lightboxImg');
+const lightboxClose = $('lightboxClose');
+
 // ============================================================
 // 4. LOCALSTORAGE: PRODUCTOS
 // ============================================================
@@ -66,7 +71,6 @@ function loadProducts() {
     if (stored) {
         try {
             products = JSON.parse(stored);
-            // Asegurar que todos los campos existan
             products = products.map(p => ({
                 ...defaultProducts.find(d => d.id === p.id) || {},
                 ...p,
@@ -140,7 +144,7 @@ function renderProducts(category = 'all') {
         card.innerHTML = `
             <div class="image-wrapper" data-id="${p.id}">
                 <img src="${p.image}" alt="${p.name}" loading="lazy" />
-                <div class="image-overlay">Cambiar foto</div>
+                <div class="image-overlay">Ver imagen</div>
             </div>
             <h3>${p.name}</h3>
             <div class="price">$${p.price.toFixed(2)}</div>
@@ -153,29 +157,6 @@ function renderProducts(category = 'all') {
             </button>
         `;
         productGrid.appendChild(card);
-
-
-    fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        try {
-            const dataUrl = await resizeImage(file, 300);
-            const idx = products.findIndex(prod => prod.id === p.id);
-            if (idx !== -1) {
-                products[idx].image = dataUrl;
-                saveProducts();
-                const img = wrapper.querySelector('img');
-                img.src = dataUrl;
-                wrapper.style.border = '3px solid #25D366';
-                setTimeout(() => wrapper.style.border = 'none', 1500);
-                if (adminSidebar.classList.contains('open')) renderAdminProducts();
-            }
-        } catch (err) {
-            alert('Error al cargar la imagen.');
-        }
-        fileInput.value = '';
-    });
-}
     });
 
     // Eventos botones agregar
@@ -349,24 +330,23 @@ categoryFilters.addEventListener('click', (e) => {
 });
 
 // ============================================================
-// 14. ADMIN: SEGURIDAD Y SESIÓN
+// 14. ADMIN: SEGURIDAD (sessionStorage)
 // ============================================================
 function isAdminAuthenticated() {
-    const session = sessionStorage.getItem(SESSION_KEY); // <-- sessionStorage
+    const session = sessionStorage.getItem(SESSION_KEY);
     if (!session) return false;
     try {
         const data = JSON.parse(session);
-        // Opcional: puedes quitar la validación de tiempo si quieres que dure solo mientras la pestaña esté abierta
-        return true; // o mantener (Date.now() - data.timestamp) < 86400000
+        return (Date.now() - data.timestamp) < 86400000; // 24 horas
     } catch { return false; }
 }
 
 function setAdminSession() {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ timestamp: Date.now() })); // <-- sessionStorage
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ timestamp: Date.now() }));
 }
 
 function clearAdminSession() {
-    sessionStorage.removeItem(SESSION_KEY); // <-- sessionStorage
+    sessionStorage.removeItem(SESSION_KEY);
 }
 
 // ============================================================
@@ -388,6 +368,7 @@ loginBtn.addEventListener('click', () => {
         setAdminSession();
         hideLoginModal();
         openAdmin();
+        adminToggle.classList.add('admin-active');
     } else {
         loginError.classList.add('show');
         loginPassword.value = '';
@@ -411,6 +392,7 @@ function openAdmin() {
     adminOverlay.classList.add('active');
     document.body.style.overflow = 'hidden';
     renderAdminProducts();
+    adminToggle.classList.add('admin-active');
 }
 
 function closeAdmin() {
@@ -423,10 +405,10 @@ adminToggle.addEventListener('click', openAdmin);
 adminClose.addEventListener('click', closeAdmin);
 adminOverlay.addEventListener('click', closeAdmin);
 
-// Cerrar sesión
 adminLogout.addEventListener('click', () => {
     clearAdminSession();
     closeAdmin();
+    adminToggle.classList.remove('admin-active');
     alert('Sesión cerrada. El acceso al panel requiere contraseña.');
 });
 
@@ -447,56 +429,40 @@ function renderAdminProducts() {
                 <label style="grid-column:1/-1;">Talles (separados por comas):
                     <input type="text" class="admin-sizes" value="${p.sizes.join(',')}" />
                 </label>
+                <label style="grid-column:1/-1;">URL imagen:
+                    <input type="text" class="admin-image" value="${p.image}" />
+                </label>
                 <label style="grid-column:1/-1;">Subir imagen:
                     <input type="file" accept="image/*" class="admin-file-input" data-id="${p.id}" />
                 </label>
-                
             </div>
-             // Evento para subir imagen desde el panel
-const fileInput = div.querySelector('.admin-file-input');
-fileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-        const dataUrl = await resizeImage(file, 300);
-        const idx = products.findIndex(prod => prod.id === p.id);
-        if (idx !== -1) {
-            products[idx].image = dataUrl;
-            saveProducts();
-            renderAdminProducts(); // refrescar panel
-            renderProducts(currentCategory);
-            updateProductButtons();
-        }
-    } catch (err) {
-        alert('Error al cargar la imagen.');
-    }
-    fileInput.value = ''; // reset
-});// Evento para subir imagen desde el panel
-const fileInput = div.querySelector('.admin-file-input');
-fileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-        const dataUrl = await resizeImage(file, 300);
-        const idx = products.findIndex(prod => prod.id === p.id);
-        if (idx !== -1) {
-            products[idx].image = dataUrl;
-            saveProducts();
-            renderAdminProducts(); // refrescar panel
-            renderProducts(currentCategory);
-            updateProductButtons();
-        }
-    } catch (err) {
-        alert('Error al cargar la imagen.');
-    }
-    fileInput.value = ''; // reset
-});
             <div class="admin-product-actions">
                 <button class="btn-save-product" data-id="${p.id}">Guardar cambios</button>
                 <button class="btn-delete-product" data-id="${p.id}">Eliminar</button>
             </div>
         `;
         adminProductList.appendChild(div);
+
+        // Evento para subir imagen desde el panel
+        const fileInput = div.querySelector('.admin-file-input');
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                const dataUrl = await resizeImage(file, 300);
+                const idx = products.findIndex(prod => prod.id === p.id);
+                if (idx !== -1) {
+                    products[idx].image = dataUrl;
+                    saveProducts();
+                    renderAdminProducts();
+                    renderProducts(currentCategory);
+                    updateProductButtons();
+                }
+            } catch (err) {
+                alert('Error al cargar la imagen.');
+            }
+            fileInput.value = '';
+        });
 
         // Guardar cambios
         div.querySelector('.btn-save-product').addEventListener('click', () => {
@@ -559,7 +525,36 @@ addProductBtn.addEventListener('click', () => {
 });
 
 // ============================================================
-// 19. WHATSAPP
+// 19. LIGHTBOX (para clientes)
+// ============================================================
+productGrid.addEventListener('click', (e) => {
+    const wrapper = e.target.closest('.image-wrapper');
+    if (!wrapper) return;
+    // Si el admin está autenticado, no abrimos lightbox (para evitar conflicto con subida desde tienda)
+    if (isAdminAuthenticated()) return;
+    const img = wrapper.querySelector('img');
+    if (img) {
+        lightboxImg.src = img.src;
+        lightbox.classList.add('active');
+    }
+});
+
+lightboxClose.addEventListener('click', () => {
+    lightbox.classList.remove('active');
+});
+
+lightbox.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+        lightbox.classList.remove('active');
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') lightbox.classList.remove('active');
+});
+
+// ============================================================
+// 20. WHATSAPP
 // ============================================================
 function sendOrderToWhatsApp() {
     const items = Object.entries(cart);
@@ -584,32 +579,9 @@ function sendOrderToWhatsApp() {
     window.open(url, '_blank');
 }
 checkoutBtnSidebar.addEventListener('click', sendOrderToWhatsApp);
-// Lightbox: abrir al hacer clic en la imagen (para todos los usuarios)
-productGrid.addEventListener('click', (e) => {
-    const wrapper = e.target.closest('.image-wrapper');
-    if (!wrapper) return;
-    // Si el admin está autenticado, no abrimos lightbox porque ya se usa para subir (ver stopPropagation)
-    // Si no es admin, abrimos el lightbox
-    if (isAdminAuthenticated()) return; // opcional: si quieres que el admin también pueda ver, quita esta línea
-    const img = wrapper.querySelector('img');
-    if (img) {
-        document.getElementById('lightboxImg').src = img.src;
-        document.getElementById('lightbox').classList.add('active');
-    }
-});
-
-// Cerrar lightbox
-document.getElementById('lightboxClose').addEventListener('click', () => {
-    document.getElementById('lightbox').classList.remove('active');
-});
-document.getElementById('lightbox').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) {
-        document.getElementById('lightbox').classList.remove('active');
-    }
-});
 
 // ============================================================
-// 20. INICIALIZACIÓN
+// 21. INICIALIZACIÓN
 // ============================================================
 loadProducts();
 loadCart();
@@ -617,3 +589,4 @@ renderProducts('all');
 updateCartUI();
 updateProductButtons();
 
+// NO activar admin al cargar, siempre pide contraseña
