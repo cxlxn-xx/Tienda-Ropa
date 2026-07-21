@@ -116,7 +116,7 @@ body {
     align-items: center;
     gap: 4px;
     background: var(--color-primary);
-    border: none;
+    border: 2px solid transparent;
     padding: 6px 14px;
     border-radius: 30px;
     font-weight: 700;
@@ -124,13 +124,17 @@ body {
     font-size: 0.85rem;
     color: var(--color-text);
     cursor: pointer;
-    transition: background var(--transition), transform var(--transition);
+    transition: all var(--transition);
 }
 
 .admin-toggle:hover {
     background: var(--color-accent);
     color: white;
     transform: scale(1.05);
+}
+
+.admin-toggle.admin-active {
+    border-color: #25D366;
 }
 
 .admin-toggle svg {
@@ -412,6 +416,45 @@ body {
     box-shadow: none;
 }
 
+/* ===== LIGHTBOX ===== */
+.lightbox {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.9);
+    justify-content: center;
+    align-items: center;
+}
+
+.lightbox.active {
+    display: flex;
+}
+
+.lightbox-img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.lightbox-close:hover {
+    color: #ff6f91;
+}
+
 /* ===== CONTACTO ===== */
 .contact-section {
     padding: 40px 0 60px;
@@ -688,11 +731,6 @@ body {
     font-family: inherit;
     font-size: 0.9rem;
     width: 100%;
-}
-
-.admin-product-item .admin-product-fields textarea {
-    resize: vertical;
-    min-height: 40px;
 }
 
 .admin-product-item .admin-product-actions {
@@ -1047,37 +1085,4 @@ body {
     .login-modal {
         padding: 30px 20px;
     }
-    /* Lightbox */
-.lightbox {
-    display: none;
-    position: fixed;
-    z-index: 9999;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.9);
-    justify-content: center;
-    align-items: center;
-}
-.lightbox.active {
-    display: flex;
-}
-.lightbox-img {
-    max-width: 90%;
-    max-height: 90%;
-    object-fit: contain;
-}
-.lightbox-close {
-    position: absolute;
-    top: 30px;
-    right: 40px;
-    color: #fff;
-    font-size: 40px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
-}
-.lightbox-close:hover {
-    color: #ff6f91;
 }
