@@ -7,15 +7,10 @@
     <link rel="stylesheet" href="styles.css" />
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600;700&display=swap" rel="stylesheet" />
 </head>
-    <!-- Lightbox -->
-<div class="lightbox" id="lightbox">
-    <span class="lightbox-close" id="lightboxClose">&times;</span>
-    <img class="lightbox-img" id="lightboxImg" src="" alt="Vista ampliada" />
-</div>
 <body>
     <header class="header">
         <div class="container header-inner">
-            <div class="logo" id="logo">
+            <div class="logo">
                 <span class="logo-text">Estilo <span>Cool</span></span>
             </div>
             <nav class="nav" id="mainNav">
@@ -51,7 +46,6 @@
         </div>
     </header>
 
-    <!-- HERO -->
     <section class="hero">
         <div class="container hero-content">
             <h1>Viste con <span>actitud</span></h1>
@@ -60,7 +54,6 @@
         </div>
     </section>
 
-    <!-- PRODUCTOS -->
     <section id="productos" class="products-section">
         <div class="container">
             <h2 class="section-title">Nuestros Favoritos</h2>
@@ -75,7 +68,6 @@
         </div>
     </section>
 
-    <!-- CONTACTO -->
     <section id="contacto" class="contact-section">
         <div class="container">
             <h2 class="section-title">Contacto</h2>
@@ -98,7 +90,13 @@
         </div>
     </section>
 
-    <!-- MODAL LOGIN (para admin) -->
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <span class="lightbox-close" id="lightboxClose">&times;</span>
+        <img class="lightbox-img" id="lightboxImg" src="" alt="Vista ampliada" />
+    </div>
+
+    <!-- Modal de login para admin -->
     <div class="login-overlay" id="loginOverlay">
         <div class="login-modal">
             <h2>Acceso Administrador</h2>
@@ -109,7 +107,7 @@
         </div>
     </div>
 
-    <!-- PANEL ADMIN (lateral) -->
+    <!-- Panel de Administración (lateral) -->
     <div class="admin-overlay" id="adminOverlay"></div>
     <aside class="admin-sidebar" id="adminSidebar">
         <div class="admin-header">
@@ -128,7 +126,7 @@
         </div>
     </aside>
 
-    <!-- CARRITO LATERAL -->
+    <!-- Carrito lateral -->
     <div class="cart-overlay" id="cartOverlay"></div>
     <aside class="cart-sidebar" id="cartSidebar">
         <div class="cart-header">
