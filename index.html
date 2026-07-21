@@ -10,7 +10,7 @@
 <body>
     <header class="header">
         <div class="container header-inner">
-            <div class="logo">
+            <div class="logo" id="logo">
                 <span class="logo-text">Estilo <span>Cool</span></span>
             </div>
             <nav class="nav" id="mainNav">
@@ -20,7 +20,7 @@
                 </ul>
             </nav>
             <div class="header-actions">
-                <!-- Botón Admin -->
+                <!-- Botón Admin (siempre visible pero protegido) -->
                 <button class="admin-toggle" id="adminToggle" aria-label="Administrar productos">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
@@ -46,6 +46,7 @@
         </div>
     </header>
 
+    <!-- HERO -->
     <section class="hero">
         <div class="container hero-content">
             <h1>Viste con <span>actitud</span></h1>
@@ -54,6 +55,7 @@
         </div>
     </section>
 
+    <!-- PRODUCTOS -->
     <section id="productos" class="products-section">
         <div class="container">
             <h2 class="section-title">Nuestros Favoritos</h2>
@@ -68,7 +70,7 @@
         </div>
     </section>
 
-    <!-- SECCIÓN CONTACTO -->
+    <!-- CONTACTO -->
     <section id="contacto" class="contact-section">
         <div class="container">
             <h2 class="section-title">Contacto</h2>
@@ -91,14 +93,14 @@
         </div>
     </section>
 
-    <!-- MODAL DE LOGIN PARA ADMIN -->
-    <div class="login-modal" id="loginModal">
-        <div class="login-box">
+    <!-- MODAL LOGIN (para admin) -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-modal">
             <h2>Acceso Administrador</h2>
             <p>Ingresa la contraseña para gestionar productos.</p>
-            <input type="password" id="adminPassword" placeholder="Contraseña" />
+            <input type="password" id="loginPassword" placeholder="Contraseña" />
             <button id="loginBtn">Entrar</button>
-            <p id="loginError" style="color: red; display: none;">Contraseña incorrecta.</p>
+            <span class="login-error" id="loginError">Contraseña incorrecta</span>
         </div>
     </div>
 
@@ -107,7 +109,10 @@
     <aside class="admin-sidebar" id="adminSidebar">
         <div class="admin-header">
             <h2>Administrar Productos</h2>
-            <button class="admin-close" id="adminClose">✕</button>
+            <div>
+                <button class="admin-logout" id="adminLogout">Cerrar sesión</button>
+                <button class="admin-close" id="adminClose">✕</button>
+            </div>
         </div>
         <div class="admin-body" id="adminBody">
             <div id="adminProductList"></div>
@@ -142,10 +147,6 @@
             <p>&copy; 2026 Estilo Cool – Hecho con amor para ti.</p>
         </div>
     </footer>
-
-    <script src="app.js"></script>
-</body>
-</html>
 
     <script src="app.js"></script>
 </body>
