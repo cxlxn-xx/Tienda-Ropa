@@ -368,7 +368,7 @@ function isAdminAuthenticated() {
     try {
         const data = JSON.parse(session);
         // Sesión válida por 1 hora
-        return (Date.now() - data.timestamp) < 3600000;
+        return true; // (Date.now() - data.timestamp) < 3600000;
     } catch { return false; }
 }
 
@@ -566,6 +566,6 @@ updateCartUI();
 updateProductButtons();
 
 // Si la sesión admin está activa, mostrar el botón admin con estilo
-if (isAdminAuthenticated()) {
-    adminToggle.style.borderColor = '#25D366';
+//if (isAdminAuthenticated()) {
+//    adminToggle.style.borderColor = '#25D366';
 }
