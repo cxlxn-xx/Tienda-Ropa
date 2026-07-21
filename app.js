@@ -1,5 +1,11 @@
 // ============================================================
-// 1. DATOS DE PRODUCTOS (por defecto con categorías)
+// CONFIGURACIÓN
+// ============================================================
+const ADMIN_PASSWORD = 'admin123'; // Cambia aquí tu contraseña
+const SESSION_KEY = 'admin_session';
+
+// ============================================================
+// 1. DATOS DE PRODUCTOS (por defecto)
 // ============================================================
 const defaultProducts = [
     { id: 1, name: 'Camiseta Básica', category: 'camisetas', price: 19.99, image: 'https://picsum.photos/id/1/200/200', stock: 10, sizes: ['S','M','L','XL'] },
@@ -13,19 +19,58 @@ const defaultProducts = [
 ];
 
 // ============================================================
-// 2. CARGAR PRODUCTOS DESDE LOCALSTORAGE
+// 2. ESTADO GLOBAL
 // ============================================================
 let products = [];
+let cart = {};
 let currentCategory = 'all';
 
+// ============================================================
+// 3. REFERENCIAS DOM
+// ============================================================
+const $ = id => document.getElementById(id);
+const productGrid = $('productGrid');
+const cartBody = $('cartBody');
+const cartFooter = $('cartFooter');
+const totalAmountSidebar = $('totalAmountSidebar');
+const cartBadge = $('cartBadge');
+const cartToggle = $('cartToggle');
+const cartClose = $('cartClose');
+const cartOverlay = $('cartOverlay');
+const cartSidebar = $('cartSidebar');
+const checkoutBtnSidebar = $('checkoutBtnSidebar');
+const menuToggle = $('menuToggle');
+const mainNav = $('mainNav');
+const categoryFilters = $('categoryFilters');
+
+// Admin
+const adminToggle = $('adminToggle');
+const adminClose = $('adminClose');
+const adminOverlay = $('adminOverlay');
+const adminSidebar = $('adminSidebar');
+const adminProductList = $('adminProductList');
+const addProductBtn = $('addProductBtn');
+const adminLogout = $('adminLogout');
+
+// Login
+const loginOverlay = $('loginOverlay');
+const loginPassword = $('loginPassword');
+const loginBtn = $('loginBtn');
+const loginError = $('loginError');
+
+// ============================================================
+// 4. LOCALSTORAGE: PRODUCTOS
+// ============================================================
 function loadProducts() {
     const stored = localStorage.getItem('products');
     if (stored) {
         try {
             products = JSON.parse(stored);
+            // Asegurar que todos los campos existan
             products = products.map(p => ({
+                ...defaultProducts.find(d => d.id === p.id) || {},
                 ...p,
-                image: p.image || defaultProducts.find(d => d.id === p.id)?.image || ''
+                sizes: p.sizes || ['S','M','L','XL']
             }));
         } catch (e) {
             products = JSON.parse(JSON.stringify(defaultProducts));
@@ -40,37 +85,7 @@ function saveProducts() {
 }
 
 // ============================================================
-// 3. ESTADO DEL CARRITO
-// ============================================================
-let cart = {};
-
-// ============================================================
-// 4. REFERENCIAS DOM
-// ============================================================
-const productGrid = document.getElementById('productGrid');
-const cartBody = document.getElementById('cartBody');
-const cartFooter = document.getElementById('cartFooter');
-const totalAmountSidebar = document.getElementById('totalAmountSidebar');
-const cartBadge = document.getElementById('cartBadge');
-const cartToggle = document.getElementById('cartToggle');
-const cartClose = document.getElementById('cartClose');
-const cartOverlay = document.getElementById('cartOverlay');
-const cartSidebar = document.getElementById('cartSidebar');
-const checkoutBtnSidebar = document.getElementById('checkoutBtnSidebar');
-const menuToggle = document.getElementById('menuToggle');
-const mainNav = document.getElementById('mainNav');
-const categoryFilters = document.getElementById('categoryFilters');
-
-// Admin
-const adminToggle = document.getElementById('adminToggle');
-const adminClose = document.getElementById('adminClose');
-const adminOverlay = document.getElementById('adminOverlay');
-const adminSidebar = document.getElementById('adminSidebar');
-const adminProductList = document.getElementById('adminProductList');
-const addProductBtn = document.getElementById('addProductBtn');
-
-// ============================================================
-// 5. LOCALSTORAGE CARRITO
+// 5. LOCALSTORAGE: CARRITO
 // ============================================================
 function saveCart() {
     localStorage.setItem('cart', JSON.stringify(cart));
@@ -79,8 +94,7 @@ function saveCart() {
 function loadCart() {
     const saved = localStorage.getItem('cart');
     if (saved) {
-        cart = JSON.parse(saved);
-        updateCartUI();
+        try { cart = JSON.parse(saved); } catch (e) { cart = {}; }
     }
 }
 
@@ -90,7 +104,7 @@ function loadCart() {
 function resizeImage(file, maxWidth = 300) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = e => {
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
@@ -110,12 +124,12 @@ function resizeImage(file, maxWidth = 300) {
 }
 
 // ============================================================
-// 7. RENDERIZAR CATÁLOGO (con filtro)
+// 7. RENDERIZAR PRODUCTOS (tienda)
 // ============================================================
 function renderProducts(category = 'all') {
     const filtered = category === 'all' ? products : products.filter(p => p.category === category);
     productGrid.innerHTML = '';
-    filtered.forEach((p) => {
+    filtered.forEach(p => {
         const totalInCart = Object.keys(cart)
             .filter(key => key.startsWith(p.id + '-'))
             .reduce((sum, key) => sum + cart[key], 0);
@@ -140,54 +154,47 @@ function renderProducts(category = 'all') {
         `;
         productGrid.appendChild(card);
 
-        // Subir imagen
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'image/*';
-        fileInput.style.display = 'none';
-        fileInput.dataset.id = p.id;
-        card.appendChild(fileInput);
+        // Subir imagen (solo si está autenticado)
+        if (isAdminAuthenticated()) {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.style.display = 'none';
+            fileInput.dataset.id = p.id;
+            card.appendChild(fileInput);
 
-        const wrapper = card.querySelector('.image-wrapper');
-        wrapper.addEventListener('click', () => {
-            fileInput.click();
-        });
+            const wrapper = card.querySelector('.image-wrapper');
+            wrapper.addEventListener('click', () => fileInput.click());
 
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            try {
-                const dataUrl = await resizeImage(file, 300);
-                const productIndex = products.findIndex(prod => prod.id === parseInt(fileInput.dataset.id));
-                if (productIndex !== -1) {
-                    products[productIndex].image = dataUrl;
-                    saveProducts();
-                    const img = wrapper.querySelector('img');
-                    img.src = dataUrl;
-                    wrapper.style.border = '3px solid #25D366';
-                    setTimeout(() => {
-                        wrapper.style.border = 'none';
-                    }, 1500);
-                    // Actualizar admin si está abierto
-                    if (adminSidebar.classList.contains('open')) {
-                        renderAdminProducts();
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    const dataUrl = await resizeImage(file, 300);
+                    const idx = products.findIndex(prod => prod.id === p.id);
+                    if (idx !== -1) {
+                        products[idx].image = dataUrl;
+                        saveProducts();
+                        const img = wrapper.querySelector('img');
+                        img.src = dataUrl;
+                        wrapper.style.border = '3px solid #25D366';
+                        setTimeout(() => wrapper.style.border = 'none', 1500);
+                        if (adminSidebar.classList.contains('open')) renderAdminProducts();
                     }
+                } catch (err) {
+                    alert('Error al cargar la imagen.');
                 }
-            } catch (err) {
-                alert('Error al cargar la imagen.');
-                console.error(err);
-            }
-            fileInput.value = '';
-        });
+                fileInput.value = '';
+            });
+        }
     });
 
+    // Eventos botones agregar
     document.querySelectorAll('.product-card button').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = parseInt(btn.dataset.id);
-            const card = btn.closest('.product-card');
-            const select = card.querySelector('.size-selector');
-            const size = select.value;
-            addToCart(id, size);
+            const select = btn.closest('.product-card').querySelector('.size-selector');
+            addToCart(id, select.value);
         });
     });
 }
@@ -244,7 +251,7 @@ function removeItem(productId, size) {
 }
 
 // ============================================================
-// 9. ACTUALIZAR UI
+// 9. ACTUALIZAR UI (carrito)
 // ============================================================
 function updateCartUI() {
     const totalItems = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
@@ -262,8 +269,7 @@ function updateCartUI() {
         const id = parseInt(idStr);
         const prod = products.find(p => p.id === id);
         if (!prod) continue;
-        const subtotal = prod.price * qty;
-        totalPrice += subtotal;
+        totalPrice += prod.price * qty;
         html += `
             <div class="cart-item">
                 <img src="${prod.image}" alt="${prod.name}" />
@@ -283,25 +289,23 @@ function updateCartUI() {
     }
     cartBody.innerHTML = html;
     totalAmountSidebar.textContent = `$${totalPrice.toFixed(2)}`;
+
+    // Eventos
     document.querySelectorAll('.qty-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = parseInt(btn.dataset.id);
-            const size = btn.dataset.size;
-            const delta = parseInt(btn.dataset.delta);
-            changeQuantity(id, size, delta);
+            changeQuantity(id, btn.dataset.size, parseInt(btn.dataset.delta));
         });
     });
     document.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const id = parseInt(btn.dataset.id);
-            const size = btn.dataset.size;
-            removeItem(id, size);
+            removeItem(parseInt(btn.dataset.id), btn.dataset.size);
         });
     });
 }
 
 // ============================================================
-// 10. ACTUALIZAR BOTONES DE PRODUCTOS
+// 10. ACTUALIZAR BOTONES DE PRODUCTOS (stock)
 // ============================================================
 function updateProductButtons() {
     document.querySelectorAll('.product-card button').forEach(btn => {
@@ -313,21 +317,14 @@ function updateProductButtons() {
             .reduce((sum, key) => sum + cart[key], 0);
         const available = product.stock - totalInCart;
         const stockInfo = btn.closest('.product-card').querySelector('.stock-info');
-        if (stockInfo) {
-            stockInfo.textContent = `Stock: ${available > 0 ? available : 'Agotado'}`;
-        }
-        if (available <= 0) {
-            btn.disabled = true;
-            btn.textContent = 'Sin stock';
-        } else {
-            btn.disabled = false;
-            btn.textContent = 'Agregar';
-        }
+        if (stockInfo) stockInfo.textContent = `Stock: ${available > 0 ? available : 'Agotado'}`;
+        btn.disabled = available <= 0;
+        btn.textContent = available > 0 ? 'Agregar' : 'Sin stock';
     });
 }
 
 // ============================================================
-// 11. ABRIR / CERRAR CARRITO
+// 11. CARRITO: ABRIR/CERRAR
 // ============================================================
 function openCart() {
     cartSidebar.classList.add('open');
@@ -342,16 +339,12 @@ function closeCart() {
 cartToggle.addEventListener('click', openCart);
 cartClose.addEventListener('click', closeCart);
 cartOverlay.addEventListener('click', closeCart);
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeCart();
-});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCart(); });
 
 // ============================================================
 // 12. MENÚ HAMBURGUESA
 // ============================================================
-menuToggle.addEventListener('click', () => {
-    mainNav.classList.toggle('open');
-});
+menuToggle.addEventListener('click', () => mainNav.classList.toggle('open'));
 
 // ============================================================
 // 13. FILTROS DE CATEGORÍA
@@ -359,18 +352,72 @@ menuToggle.addEventListener('click', () => {
 categoryFilters.addEventListener('click', (e) => {
     const btn = e.target.closest('.filter-btn');
     if (!btn) return;
-    const category = btn.dataset.category;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    currentCategory = category;
-    renderProducts(category);
+    currentCategory = btn.dataset.category;
+    renderProducts(currentCategory);
     updateProductButtons();
 });
 
 // ============================================================
-// 14. ADMIN: ABRIR / CERRAR
+// 14. ADMIN: SEGURIDAD Y SESIÓN
+// ============================================================
+function isAdminAuthenticated() {
+    const session = localStorage.getItem(SESSION_KEY);
+    if (!session) return false;
+    try {
+        const data = JSON.parse(session);
+        // Sesión válida por 1 hora
+        return (Date.now() - data.timestamp) < 3600000;
+    } catch { return false; }
+}
+
+function setAdminSession() {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ timestamp: Date.now() }));
+}
+
+function clearAdminSession() {
+    localStorage.removeItem(SESSION_KEY);
+}
+
+// ============================================================
+// 15. ADMIN: LOGIN
+// ============================================================
+function showLoginModal() {
+    loginOverlay.classList.add('active');
+    loginPassword.value = '';
+    loginError.classList.remove('show');
+    loginPassword.focus();
+}
+
+function hideLoginModal() {
+    loginOverlay.classList.remove('active');
+}
+
+loginBtn.addEventListener('click', () => {
+    if (loginPassword.value === ADMIN_PASSWORD) {
+        setAdminSession();
+        hideLoginModal();
+        openAdmin();
+    } else {
+        loginError.classList.add('show');
+        loginPassword.value = '';
+        loginPassword.focus();
+    }
+});
+
+loginPassword.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') loginBtn.click();
+});
+
+// ============================================================
+// 16. ADMIN: ABRIR/CERRAR PANEL
 // ============================================================
 function openAdmin() {
+    if (!isAdminAuthenticated()) {
+        showLoginModal();
+        return;
+    }
     adminSidebar.classList.add('open');
     adminOverlay.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -387,8 +434,15 @@ adminToggle.addEventListener('click', openAdmin);
 adminClose.addEventListener('click', closeAdmin);
 adminOverlay.addEventListener('click', closeAdmin);
 
+// Cerrar sesión
+adminLogout.addEventListener('click', () => {
+    clearAdminSession();
+    closeAdmin();
+    alert('Sesión cerrada. El acceso al panel requiere contraseña.');
+});
+
 // ============================================================
-// 15. ADMIN: RENDERIZAR PRODUCTOS EN EL PANEL
+// 17. ADMIN: RENDERIZAR PRODUCTOS EN EL PANEL
 // ============================================================
 function renderAdminProducts() {
     adminProductList.innerHTML = '';
@@ -397,22 +451,14 @@ function renderAdminProducts() {
         div.className = 'admin-product-item';
         div.innerHTML = `
             <div class="admin-product-fields">
-                <label>Nombre:
-                    <input type="text" class="admin-name" value="${p.name}" />
-                </label>
-                <label>Precio:
-                    <input type="number" step="0.01" class="admin-price" value="${p.price}" />
-                </label>
-                <label>Stock:
-                    <input type="number" class="admin-stock" value="${p.stock}" />
-                </label>
-                <label>Categoría:
-                    <input type="text" class="admin-category" value="${p.category}" />
-                </label>
-                <label style="grid-column: 1 / -1;">Talles (separados por comas):
+                <label>Nombre: <input type="text" class="admin-name" value="${p.name}" /></label>
+                <label>Precio: <input type="number" step="0.01" class="admin-price" value="${p.price}" /></label>
+                <label>Stock: <input type="number" class="admin-stock" value="${p.stock}" /></label>
+                <label>Categoría: <input type="text" class="admin-category" value="${p.category}" /></label>
+                <label style="grid-column:1/-1;">Talles (separados por comas):
                     <input type="text" class="admin-sizes" value="${p.sizes.join(',')}" />
                 </label>
-                <label style="grid-column: 1 / -1;">URL de imagen:
+                <label style="grid-column:1/-1;">URL imagen:
                     <input type="text" class="admin-image" value="${p.image}" />
                 </label>
             </div>
@@ -423,10 +469,9 @@ function renderAdminProducts() {
         `;
         adminProductList.appendChild(div);
 
-        // Evento guardar
-        const saveBtn = div.querySelector('.btn-save-product');
-        saveBtn.addEventListener('click', () => {
-            const id = parseInt(saveBtn.dataset.id);
+        // Guardar cambios
+        div.querySelector('.btn-save-product').addEventListener('click', () => {
+            const id = parseInt(div.querySelector('.btn-save-product').dataset.id);
             const index = products.findIndex(prod => prod.id === id);
             if (index === -1) return;
             const name = div.querySelector('.admin-name').value.trim();
@@ -442,16 +487,15 @@ function renderAdminProducts() {
             const sizes = sizesStr.split(',').map(s => s.trim()).filter(s => s);
             products[index] = { ...products[index], name, price, stock, category, sizes, image };
             saveProducts();
-            renderAdminProducts(); // refresca el panel
+            renderAdminProducts();
             renderProducts(currentCategory);
             updateProductButtons();
-            updateCartUI(); // por si cambió el precio
+            updateCartUI();
         });
 
-        // Evento eliminar
-        const deleteBtn = div.querySelector('.btn-delete-product');
-        deleteBtn.addEventListener('click', () => {
-            const id = parseInt(deleteBtn.dataset.id);
+        // Eliminar
+        div.querySelector('.btn-delete-product').addEventListener('click', () => {
+            const id = parseInt(div.querySelector('.btn-delete-product').dataset.id);
             if (confirm('¿Eliminar este producto?')) {
                 products = products.filter(p => p.id !== id);
                 saveProducts();
@@ -465,7 +509,7 @@ function renderAdminProducts() {
 }
 
 // ============================================================
-// 16. ADMIN: AGREGAR PRODUCTO
+// 18. ADMIN: AGREGAR PRODUCTO
 // ============================================================
 addProductBtn.addEventListener('click', () => {
     const maxId = products.reduce((max, p) => Math.max(max, p.id), 0);
@@ -486,7 +530,7 @@ addProductBtn.addEventListener('click', () => {
 });
 
 // ============================================================
-// 17. WHATSAPP
+// 19. WHATSAPP
 // ============================================================
 function sendOrderToWhatsApp() {
     const items = Object.entries(cart);
@@ -498,29 +542,30 @@ function sendOrderToWhatsApp() {
     let total = 0;
     for (const [key, qty] of items) {
         const [idStr, size] = key.split('-');
-        const id = parseInt(idStr);
-        const prod = products.find(p => p.id === id);
+        const prod = products.find(p => p.id === parseInt(idStr));
         if (!prod) continue;
-        const subtotal = prod.price * qty;
-        total += subtotal;
-        message += `${prod.name} (Talle ${size}) x${qty} → $${subtotal.toFixed(2)}\n`;
+        total += prod.price * qty;
+        message += `${prod.name} (Talle ${size}) x${qty} → $${(prod.price * qty).toFixed(2)}\n`;
     }
     message += `\nTotal: $${total.toFixed(2)}`;
     message += '\n\nGracias por tu compra!';
-    const encodedMessage = encodeURIComponent(message);
-    const phoneNumber = ''; // <-- PON AQUÍ TU NÚMERO
-    const url = phoneNumber
-        ? `https://wa.me/${phoneNumber}?text=${encodedMessage}`
-        : `https://api.whatsapp.com/send?text=${encodedMessage}`;
+    const encoded = encodeURIComponent(message);
+    const phone = ''; // Tu número aquí
+    const url = phone ? `https://wa.me/${phone}?text=${encoded}` : `https://api.whatsapp.com/send?text=${encoded}`;
     window.open(url, '_blank');
 }
 checkoutBtnSidebar.addEventListener('click', sendOrderToWhatsApp);
 
 // ============================================================
-// 18. INICIALIZACIÓN
+// 20. INICIALIZACIÓN
 // ============================================================
 loadProducts();
 loadCart();
 renderProducts('all');
 updateCartUI();
 updateProductButtons();
+
+// Si la sesión admin está activa, mostrar el botón admin con estilo
+if (isAdminAuthenticated()) {
+    adminToggle.style.borderColor = '#25D366';
+}
