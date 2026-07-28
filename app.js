@@ -420,49 +420,26 @@ function renderAdminProducts() {
     products.forEach(p => {
         const div = document.createElement('div');
         div.className = 'admin-product-item';
-        div.innerHTML = `
-            <div class="admin-product-fields">
-                <label>Nombre: <input type="text" class="admin-name" value="${p.name}" /></label>
-                <label>Precio: <input type="number" step="0.01" class="admin-price" value="${p.price}" /></label>
-                <label>Stock: <input type="number" class="admin-stock" value="${p.stock}" /></label>
-                <label>Categoría: <input type="text" class="admin-category" value="${p.category}" /></label>
-                <label style="grid-column:1/-1;">Talles (separados por comas):
-                    <input type="text" class="admin-sizes" value="${p.sizes.join(',')}" />
-                </label>
-                <label style="grid-column:1/-1;">URL imagen:
-                    <input type="text" class="admin-image" value="${p.image}" />
-                </label>
-                <label style="grid-column:1/-1;">Subir imagen:
-                    <input type="file" accept="image/*" class="admin-file-input" data-id="${p.id}" />
-                </label>
-            </div>
-            <div class="admin-product-actions">
-                <button class="btn-save-product" data-id="${p.id}">Guardar cambios</button>
-                <button class="btn-delete-product" data-id="${p.id}">Eliminar</button>
-            </div>
-        `;
+      div.innerHTML = `
+    <div class="admin-product-fields">
+        <label>Nombre: <input type="text" class="admin-name" value="${p.name}" /></label>
+        <label>Precio: <input type="number" step="0.01" class="admin-price" value="${p.price}" /></label>
+        <label>Stock: <input type="number" class="admin-stock" value="${p.stock}" /></label>
+        <label>Categoría: <input type="text" class="admin-category" value="${p.category}" /></label>
+        <label style="grid-column:1/-1;">Talles (separados por comas):
+            <input type="text" class="admin-sizes" value="${p.sizes.join(',')}" />
+        </label>
+        <label style="grid-column:1/-1;">URL imagen (pública):
+            <input type="text" class="admin-image" value="${p.image}" placeholder="https://ejemplo.com/mi-foto.jpg" />
+        </label>
+    </div>
+    <div class="admin-product-actions">
+        <button class="btn-save-product" data-id="${p.id}">Guardar cambios</button>
+        <button class="btn-delete-product" data-id="${p.id}">Eliminar</button>
+    </div>
+`;
         adminProductList.appendChild(div);
 
-        // Evento para subir imagen desde el panel
-        const fileInput = div.querySelector('.admin-file-input');
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            try {
-                const dataUrl = await resizeImage(file, 300);
-                const idx = products.findIndex(prod => prod.id === p.id);
-                if (idx !== -1) {
-                    products[idx].image = dataUrl;
-                    saveProducts();
-                    renderAdminProducts();
-                    renderProducts(currentCategory);
-                    updateProductButtons();
-                }
-            } catch (err) {
-                alert('Error al cargar la imagen.');
-            }
-            fileInput.value = '';
-        });
 
         // Guardar cambios
         div.querySelector('.btn-save-product').addEventListener('click', () => {
