@@ -8,16 +8,15 @@ const SESSION_KEY = 'admin_session';
 // 1. DATOS DE PRODUCTOS (por defecto)
 // ============================================================
 const defaultProducts = [
-    { id: 1, name: 'Camiseta Básica', category: 'camisetas', price: 19.99, image: 'https://picsum.photos/id/1/200/200', stock: 10, sizes: ['S','M','L','XL'] },
-    { id: 2, name: 'Polo Clásico', category: 'camisetas', price: 29.99, image: 'https://picsum.photos/id/2/200/200', stock: 8, sizes: ['S','M','L'] },
-    { id: 3, name: 'Vestido Floral', category: 'camisetas', price: 39.99, image: 'https://picsum.photos/id/3/200/200', stock: 5, sizes: ['S','M','L','XL'] },
-    { id: 4, name: 'Jeans Ajustados', category: 'pantalones', price: 49.99, image: 'https://picsum.photos/id/4/200/200', stock: 6, sizes: ['28','30','32','34'] },
-    { id: 5, name: 'Chaqueta de Cuero', category: 'pantalones', price: 79.99, image: 'https://picsum.photos/id/5/200/200', stock: 3, sizes: ['S','M','L'] },
-    { id: 6, name: 'Zapatos Deportivos', category: 'calzado', price: 59.99, image: 'https://picsum.photos/id/6/200/200', stock: 7, sizes: ['39','40','41','42','43'] },
-    { id: 7, name: 'Gorra Urbana', category: 'accesorios', price: 24.99, image: 'https://picsum.photos/id/7/200/200', stock: 12, sizes: ['Único'] },
-    { id: 8, name: 'Mochila Moderna', category: 'accesorios', price: 45.00, image: 'https://picsum.photos/id/8/200/200', stock: 4, sizes: ['Único'] }
+    { id: 1, name: 'Camiseta Básica', category: 'camisetas', price: 19.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 10, sizes: ['S','M','L','XL'] },
+    { id: 2, name: 'Polo Clásico', category: 'camisetas', price: 29.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 8, sizes: ['S','M','L'] },
+    { id: 3, name: 'Vestido Floral', category: 'camisetas', price: 39.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 5, sizes: ['S','M','L','XL'] },
+    { id: 4, name: 'Jeans Ajustados', category: 'pantalones', price: 49.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 6, sizes: ['28','30','32','34'] },
+    { id: 5, name: 'Chaqueta de Cuero', category: 'pantalones', price: 79.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 3, sizes: ['S','M','L'] },
+    { id: 6, name: 'Zapatos Deportivos', category: 'calzado', price: 59.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 7, sizes: ['39','40','41','42','43'] },
+    { id: 7, name: 'Gorra Urbana', category: 'accesorios', price: 24.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 12, sizes: ['Único'] },
+    { id: 8, name: 'Mochila Moderna', category: 'accesorios', price: 45.00, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 4, sizes: ['Único'] }
 ];
-
 // ============================================================
 // 2. ESTADO GLOBAL
 // ============================================================
