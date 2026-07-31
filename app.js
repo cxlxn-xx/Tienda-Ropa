@@ -3,14 +3,14 @@
 // ============================================================
 const ADMIN_PASSWORD = 'admin123'; // Cambia aquí tu contraseña
 const SESSION_KEY = 'admin_session';
-const APP_VERSION = '2.1'; // Cambia este número cada vez que actualices productos
+const APP_VERSION = '2.2'; // Cambia este número cada vez que actualices productos
 
 // ============================================================
 // 1. DATOS DE PRODUCTOS (por defecto)
 // ============================================================
 const defaultProducts = [
-    { id: 1, name: 'Camiseta Básica', category: 'camisetas', price: 19.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 10, sizes: ['S','M','L','XL'] },
-    { id: 2, name: 'Polo Clásico', category: 'camisetas', price: 29.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 8, sizes: ['S','M','L'] },
+    { id: 1, name: 'Campera Darlon', category: 'camperas', price: 19.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 10, sizes: ['S','M','L','XL'] },
+    { id: 2, name: 'Remera ', category: 'remeras', price: 29.99, image: 'https://i.ibb.co/MxgRJWsy/il-300x300-6638983628-bkaa.jpg', stock: 8, sizes: ['S','M','L'] },
     { id: 3, name: 'Vestido Floral', category: 'camisetas', price: 39.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 5, sizes: ['S','M','L','XL'] },
     { id: 4, name: 'Jeans Ajustados', category: 'pantalones', price: 49.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 6, sizes: ['28','30','32','34'] },
     { id: 5, name: 'Chaqueta de Cuero', category: 'pantalones', price: 79.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 3, sizes: ['S','M','L'] },
