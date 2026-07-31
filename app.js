@@ -12,8 +12,8 @@ const defaultProducts = [
     { id: 1, name: 'Campera Darlon', category: 'camperas', price: 19.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 10, sizes: ['S','M','L','XL'] },
     { id: 2, name: 'Remera ', category: 'remeras', price: 29.99, image: 'https://i.ibb.co/MxgRJWsy/il-300x300-6638983628-bkaa.jpg', stock: 8, sizes: ['S','M','L'] },
     { id: 3, name: 'Buzo Premium', category: 'buzos', price: 39.99, image: 'https://gudaima.ar/wp-content/uploads/2026/07/img_9946-scaled-1.webp', stock: 5, sizes: ['S','M','L','XL'] },
-    { id: 4, name: 'Jeans Ajustados', category: 'pantalones', price: 49.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 6, sizes: ['28','30','32','34'] },
-    { id: 5, name: 'Chaqueta de Cuero', category: 'pantalones', price: 79.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 3, sizes: ['S','M','L'] },
+    { id: 4, name: 'Palazzo Morely Viscosa', category: 'pantalones', price: 49.99, image: 'https://gudaima.ar/wp-content/uploads/2026/07/WhatsApp-Image-2025-11-03-at-16.56.43-1.jpeg', stock: 6, sizes: ['28','30','32','34'] },
+    { id: 5, name: 'Pantalon 97', category: 'pantalones', price: 79.99, image: 'https://gudaima.ar/wp-content/uploads/2026/07/img_1211-scaled-1.webp', stock: 3, sizes: ['S','M','L'] },
     { id: 6, name: 'Zapatos Deportivos', category: 'calzado', price: 59.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 7, sizes: ['39','40','41','42','43'] },
     { id: 7, name: 'Gorra Urbana', category: 'accesorios', price: 24.99, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 12, sizes: ['Único'] },
     { id: 8, name: 'Mochila Moderna', category: 'accesorios', price: 45.00, image: 'https://i.ibb.co/rKnkrNQW/reme.webp', stock: 4, sizes: ['Único'] }
