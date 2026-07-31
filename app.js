@@ -3,6 +3,7 @@
 // ============================================================
 const ADMIN_PASSWORD = 'admin123'; // Cambia aquí tu contraseña
 const SESSION_KEY = 'admin_session';
+const APP_VERSION = '2.0'; // Cambia este número cada vez que actualices productos
 
 // ============================================================
 // 1. DATOS DE PRODUCTOS (por defecto)
@@ -67,19 +68,28 @@ const lightboxClose = $('lightboxClose');
 // ============================================================
 function loadProducts() {
     const stored = localStorage.getItem('products');
-    if (stored) {
-        try {
-            products = JSON.parse(stored);
-            products = products.map(p => ({
-                ...defaultProducts.find(d => d.id === p.id) || {},
-                ...p,
-                sizes: p.sizes || ['S','M','L','XL']
-            }));
-        } catch (e) {
-            products = JSON.parse(JSON.stringify(defaultProducts));
-        }
-    } else {
+    const version = localStorage.getItem('products_version');
+    
+    // Si no hay datos o la versión es diferente, cargar los nuevos productos
+    if (!stored || version !== APP_VERSION) {
         products = JSON.parse(JSON.stringify(defaultProducts));
+        saveProducts();
+        localStorage.setItem('products_version', APP_VERSION);
+        return;
+    }
+    
+    try {
+        products = JSON.parse(stored);
+        // Asegurar que todos los campos existan
+        products = products.map(p => ({
+            ...defaultProducts.find(d => d.id === p.id) || {},
+            ...p,
+            sizes: p.sizes || ['S','M','L','XL']
+        }));
+    } catch (e) {
+        products = JSON.parse(JSON.stringify(defaultProducts));
+        saveProducts();
+        localStorage.setItem('products_version', APP_VERSION);
     }
 }
 
