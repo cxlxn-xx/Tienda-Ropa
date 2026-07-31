@@ -3,7 +3,7 @@
 // ============================================================
 const ADMIN_PASSWORD = 'admin123'; // Cambia aquí tu contraseña
 const SESSION_KEY = 'admin_session';
-const APP_VERSION = '2.0'; // Cambia este número cada vez que actualices productos
+const APP_VERSION = '2.1'; // Cambia este número cada vez que actualices productos
 
 // ============================================================
 // 1. DATOS DE PRODUCTOS (por defecto)
